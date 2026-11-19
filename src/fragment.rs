@@ -115,10 +115,10 @@ impl AsyncWrite for FragmentedStream {
     }
 
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-        Pin::new(&mut this.inner).poll_flush(cx)
+        Pin::new(&mut self.inner).poll_flush(cx)
     }
 
     fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-        Pin::new(&mut this.inner).poll_shutdown(cx)
+        Pin::new(&mut self.inner).poll_shutdown(cx)
     }
 }
