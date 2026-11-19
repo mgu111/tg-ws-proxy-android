@@ -7,9 +7,6 @@ use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 use tokio::net::TcpStream;
 use tokio::time::{sleep, Sleep};
 
-/// Обёртка над TcpStream, которая разрезает первый TLS-пакет (ClientHello)
-/// на две части ровно посередине домена SNI с микропаузой 2 мс.
-/// После отправки ClientHello переходит в 100% прозрачный режим.
 pub struct FragmentedStream {
     inner: TcpStream,
     sni: Vec<u8>,
@@ -35,8 +32,7 @@ impl FragmentedStream {
     }
 
     fn split_client_hello(&mut self, buf: &[u8]) {
-        // TLS Handshake record начинается с 0x16
-        if buf.len() > 10 && buf[0] == 0x16 && !self.sni.is_empty() {
+        if buf.len() > 10 && buf.first() == Some(&0x16) && !self.sni.is_empty() {
             if let Some(pos) = buf.windows(self.sni.len()).position(|w| w == self.sni.as_slice()) {
                 let mid_sni = pos + (self.sni.len() / 2);
                 self.pending_chunks.push(buf[..mid_sni].to_vec());
@@ -45,7 +41,6 @@ impl FragmentedStream {
             }
         }
 
-        // Если SNI не найден (например, IP-адрес), режем заголовок TLS Record (первые 3 байта)
         if buf.len() > 5 {
             self.pending_chunks.push(buf[..3].to_vec());
             self.pending_chunks.push(buf[3..].to_vec());
