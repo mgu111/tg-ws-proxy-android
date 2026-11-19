@@ -43,9 +43,12 @@ jobs:
           else
             gradle assembleDebug
           fi
+          echo "=== Найденные APK ==="
+          find . -type f -name "*.apk"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: tg-ws-proxy-debug-apk
-          path: "**/build/outputs/apk/debug/*.apk"
+          path: "**/*.apk"
+          if-no-files-found: error
