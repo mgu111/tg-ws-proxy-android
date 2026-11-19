@@ -3,6 +3,7 @@ pub mod config;
 pub mod crypto;
 pub mod faketls;
 pub mod proxy;
+pub mod fragment;
 pub mod ws;
 pub mod balancer;
 
