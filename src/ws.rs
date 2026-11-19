@@ -1,3 +1,4 @@
+use crate::fragment::FragmentedStream;
 use crate::config::*;
 use crate::crypto::xor_mask_in_place;
 use crate::{ldebug};
@@ -93,6 +94,7 @@ static TLS_CONFIG: Lazy<Arc<ClientConfig>> = Lazy::new(|| {
         .with_custom_certificate_verifier(Arc::new(NoVerify))
         .with_no_client_auth();
     cfg.resumption = rustls::client::Resumption::in_memory_sessions(100);
+    cfg.alpn_protocols = vec![b"http/1.1".to_vec()];
     Arc::new(cfg)
 });
 
@@ -178,12 +180,12 @@ impl From<std::io::Error> for WsError {
 // ---------------------------------------------------------------------------
 
 enum WsReader {
-    Tls(BufReader<tokio::io::ReadHalf<TlsStream<TcpStream>>>),
+    Tls(BufReader<tokio::io::ReadHalf<TlsStream<FragmentedStream>>>),
     Plain(BufReader<tokio::io::ReadHalf<TcpStream>>),
 }
 
 enum WsWriter {
-    Tls(tokio::io::WriteHalf<TlsStream<TcpStream>>),
+    Tls(tokio::io::WriteHalf<TlsStream<FragmentedStream>>),
     Plain(tokio::io::WriteHalf<TcpStream>),
 }
 
@@ -613,8 +615,8 @@ fn server_name(domain: &str) -> ServerName<'static> {
 
 // Типизированный handshake: возвращает готовый RawWebSocket без type-erasure.
 async fn handshake_tls(
-    read_half: tokio::io::ReadHalf<TlsStream<TcpStream>>,
-    mut write_half: tokio::io::WriteHalf<TlsStream<TcpStream>>,
+    read_half: tokio::io::ReadHalf<TlsStream<FragmentedStream>>,
+    mut write_half: tokio::io::WriteHalf<TlsStream<FragmentedStream>>,
     domain: &str,
     path: &str,
     timeout: Duration,
@@ -817,6 +819,7 @@ pub async fn ws_connect_once_full(
     let sni_server = server_name(sni_name);
 
     let handshake_timeout = ws_handshake_timeout(timeout);
+    let frag_conn = FragmentedStream::new(raw_conn, sni_name);
     let tls_conn =
         match tokio::time::timeout(handshake_timeout, connector.connect(sni_server, raw_conn)).await {
             Ok(Ok(c)) => c,
