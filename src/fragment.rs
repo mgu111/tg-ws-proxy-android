@@ -1,3 +1,4 @@
+use std::future::Future;
 use std::io;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -35,7 +36,7 @@ impl FragmentedStream {
 
     fn split_client_hello(&mut self, buf: &[u8]) {
         // TLS Handshake record начинается с 0x16
-        if buf.len() > 10 && buf == 0x16 && !self.sni.is_empty() {
+        if buf.len() > 10 && buf[0] == 0x16 && !self.sni.is_empty() {
             if let Some(pos) = buf.windows(self.sni.len()).position(|w| w == self.sni.as_slice()) {
                 let mid_sni = pos + (self.sni.len() / 2);
                 self.pending_chunks.push(buf[..mid_sni].to_vec());
@@ -119,10 +120,10 @@ impl AsyncWrite for FragmentedStream {
     }
 
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-        Pin::new(&mut self.inner).poll_flush(cx)
+        Pin::new(&mut this.inner).poll_flush(cx)
     }
 
     fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-        Pin::new(&mut self.inner).poll_shutdown(cx)
+        Pin::new(&mut this.inner).poll_shutdown(cx)
     }
 }
