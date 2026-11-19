@@ -821,7 +821,7 @@ pub async fn ws_connect_once_full(
     let handshake_timeout = ws_handshake_timeout(timeout);
     let frag_conn = FragmentedStream::new(raw_conn, sni_name);
     let tls_conn =
-        match tokio::time::timeout(handshake_timeout, connector.connect(sni_server, raw_conn)).await {
+        match tokio::time::timeout(handshake_timeout, connector.connect(sni_server, frag_conn)).await {
             Ok(Ok(c)) => c,
             Ok(Err(e)) => {
                 if e.kind() != std::io::ErrorKind::ConnectionReset {
