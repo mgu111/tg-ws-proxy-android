@@ -311,6 +311,18 @@ pub extern "C" fn GetSecretWithPrefix() -> *mut c_char {
 /// # Safety
 /// `p` должен быть указателем, ранее возвращённым из этой библиотеки.
 #[unsafe(no_mangle)]
+#[unsafe(no_mangle)]
+pub extern "C" fn SetTcpFallbackEnabled(v: c_int) {
+    TCP_FALLBACK_ENABLED.store(v != 0, Ordering::Relaxed);
+}
+
+/// # Safety
+/// `c_token` — валидная C-строка или null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn SetCfWorkerToken(c_token: *const c_char) {
+    let t = cstr_to_string(c_token);
+    *CF_WORKER_TOKEN.write() = t.trim().to_string();
+}
 pub unsafe extern "C" fn FreeString(p: *mut c_char) {
     if p.is_null() {
         return;
