@@ -100,6 +100,9 @@ impl Default for Cfproxy429State {
 
 // Cloudflare proxy config
 pub static CFPROXY_ENABLED: AtomicBool = AtomicBool::new(true);
+pub static TCP_FALLBACK_ENABLED: AtomicBool = AtomicBool::new(true);
+pub static CF_WORKER_TOKEN: Lazy<RwLock<String>> =
+    Lazy::new(|| RwLock::new(String::new()));
 
 pub struct CfproxyConfig {
     pub user_domain: String,
