@@ -37,6 +37,10 @@ class SettingsStore(private val context: Context) {
         val BIND_IP = stringPreferencesKey("bind_ip")
         val POOL_SIZE = intPreferencesKey("pool_size")
         val CFPROXY_ENABLED = booleanPreferencesKey("cfproxy_enabled")
+        val tcpFallbackEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.TCP_FALLBACK_ENABLED] ?: false }
+        val cfWorkerEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.CF_WORKER_ENABLED] ?: true }
+        val cfWorkerDomain: Flow<String> = context.dataStore.data.map { it[Keys.CF_WORKER_DOMAIN] ?: DEFAULT_WORKER_DOMAIN }
+        val cfWorkerToken: Flow<String> = context.dataStore.data.map { it[Keys.CF_WORKER_TOKEN] ?: DEFAULT_WORKER_TOKEN }
         val CUSTOM_CF_DOMAIN_ENABLED = booleanPreferencesKey("custom_cf_domain_enabled")
         val CUSTOM_CF_DOMAIN = stringPreferencesKey("custom_cf_domain")
         val AUTO_START_ON_BOOT = booleanPreferencesKey("auto_start_on_boot")
@@ -192,6 +196,10 @@ class SettingsStore(private val context: Context) {
                         dc1m: String, dc2m: String, dc3m: String, dc4m: String, dc5m: String, dc203m: String,
                         isExperimental: Boolean, bindIp: String, port: String, poolSize: Int,
                         cfproxyEnabled: Boolean, customCfDomainEnabled: Boolean, customCfDomain: String, secretKey: String) {
+                        tcpFallbackEnabled: Boolean,
+                        cfWorkerEnabled: Boolean,
+                        cfWorkerDomain: String,
+                        cfWorkerToken: String
         context.dataStore.edit {
             it[Keys.IS_DC_AUTO] = isDcAuto
             it[Keys.DC1] = dc1
@@ -214,6 +222,10 @@ class SettingsStore(private val context: Context) {
             it[Keys.CUSTOM_CF_DOMAIN_ENABLED] = customCfDomainEnabled
             it[Keys.CUSTOM_CF_DOMAIN] = customCfDomain
             it[Keys.SECRET_KEY] = secretKey
-        }
+            it[Keys.TCP_FALLBACK_ENABLED] = tcpFallbackEnabled
+            it[Keys.CF_WORKER_ENABLED] = cfWorkerEnabled
+            it[Keys.CF_WORKER_DOMAIN] = cfWorkerDomain
+            it[Keys.CF_WORKER_TOKEN] = cfWorkerToken
+            }
     }
 }
