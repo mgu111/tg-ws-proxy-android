@@ -1378,15 +1378,22 @@ where
             .cf_worker
             .get(dc, fallback_dst.clone(), worker_domains.clone())
             .await;
-        let worker_ws = if let Some((ws, worker_domain)) = pooled {
+                // Пул воркеров прогревает только обычные (не media) DC, поэтому для media идём напрямую
+        let worker_ws = if let (false, Some((ws, worker_domain))) = (is_media, pooled) {
             linfo!(
                 "[{}] DC{}{} -> CF worker pool hit via {} for {}",
                 label, dc, m_tag, worker_domain, fallback_dst
             );
             Some(ws)
         } else {
-            let secure = !DISABLE_SECURE.load(Ordering::Relaxed);
-            let query = format!("dst={}&dc={}", fallback_dst, dc);
+            let token = CF_WORKER_TOKEN.read().clone();
+            let query = format!(
+                "dst={}&dc={}&media={}&token={}",
+                fallback_dst,
+                dc,
+                if is_media { 1 } else { 0 },
+                token
+            );
             let path = format!("/apiws?{}", query);
             let mut found = None;
             for worker_domain in pools.cf_worker.available_domains(worker_domains.clone()).await {
@@ -1400,7 +1407,7 @@ where
                     &path,
                     10.0,
                     None,
-                    Some(secure),
+                    Some(true),
                 )
                 .await
                 {
@@ -1477,7 +1484,8 @@ where
     }
 
     // Шаг 3: tcp.
-    if !fallback_dst.is_empty() {
+        // Шаг 3: tcp.
+    if TCP_FALLBACK_ENABLED.load(Ordering::Relaxed) && !fallback_dst.is_empty() {
         linfo!(
             "[{}] DC{}{} -> TCP fallback to {}:{}",
             label, dc, m_tag, fallback_dst, secure_port
