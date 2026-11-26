@@ -155,7 +155,7 @@ fun SettingsTab(settingsStore: SettingsStore) {
                 isDcAuto, dc1Text, dc2Text, dc3Text, dc4Text, dc5Text, dc203Text,
                 dc1mText, dc2mText, dc3mText, dc4mText, dc5mText, dc203mText,
                 experimentalMode, bindIpText, portText, selectedPoolSize,
-                cfEnabled, customCfDomainEnabled, customCfDomain, secretKeyText
+                cfEnabled, customCfDomainEnabled, customCfDomain, secretKeyText,
                 cfWorkerEnabled = cfWorkerEnabled,
                 cfWorkerDomain = if (cfWorkerEnabled) cfWorkerDomainText.trim() else "",
                 cfWorkerToken = if (cfWorkerEnabled) cfWorkerTokenText.trim() else ""
