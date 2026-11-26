@@ -68,6 +68,14 @@ fun SettingsTab(settingsStore: SettingsStore) {
     val scope = rememberCoroutineScope()
     val isRunning by ProxyService.isRunning.collectAsStateWithLifecycle()
 
+    val savedCfWorkerEnabled by settingsStore.cfWorkerEnabled.collectAsStateWithLifecycle(initialValue = false)
+    val savedCfWorkerDomain by settingsStore.cfWorkerDomain.collectAsStateWithLifecycle(initialValue = "")
+    val savedCfWorkerToken by settingsStore.cfWorkerToken.collectAsStateWithLifecycle(initialValue = "")
+
+    var cfWorkerEnabled by rememberSaveable(savedCfWorkerEnabled) { mutableStateOf(savedCfWorkerEnabled) }
+    var cfWorkerDomainText by rememberSaveable(savedCfWorkerDomain) { mutableStateOf(savedCfWorkerDomain) }
+    var cfWorkerTokenText by rememberSaveable(savedCfWorkerToken) { mutableStateOf(savedCfWorkerToken) }
+    
     val isReady by settingsStore.isReady.collectAsStateWithLifecycle(initialValue = false)
     val isExperimental by settingsStore.isExperimentalMode.collectAsStateWithLifecycle(initialValue = false)
 
@@ -148,6 +156,9 @@ fun SettingsTab(settingsStore: SettingsStore) {
                 dc1mText, dc2mText, dc3mText, dc4mText, dc5mText, dc203mText,
                 experimentalMode, bindIpText, portText, selectedPoolSize,
                 cfEnabled, customCfDomainEnabled, customCfDomain, secretKeyText
+                cfWorkerEnabled = cfWorkerEnabled,
+                cfWorkerDomain = if (cfWorkerEnabled) cfWorkerDomainText.trim() else "",
+                cfWorkerToken = if (cfWorkerEnabled) cfWorkerTokenText.trim() else ""
             )
         }
     }
