@@ -22,6 +22,8 @@ class SettingsStore(private val context: Context) {
         private const val LEGACY_DIRECT_DC_IP = "149.154.167.220"
         const val DEFAULT_LOG_SHOW_INFO = true
         const val DEFAULT_LOG_SHOW_ERROR = false
+        const val DEFAULT_WORKER_DOMAIN = ""
+        const val DEFAULT_WORKER_TOKEN = ""
     }
 
     private object Keys {
@@ -37,10 +39,10 @@ class SettingsStore(private val context: Context) {
         val BIND_IP = stringPreferencesKey("bind_ip")
         val POOL_SIZE = intPreferencesKey("pool_size")
         val CFPROXY_ENABLED = booleanPreferencesKey("cfproxy_enabled")
-        val tcpFallbackEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.TCP_FALLBACK_ENABLED] ?: false }
-        val cfWorkerEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.CF_WORKER_ENABLED] ?: true }
-        val cfWorkerDomain: Flow<String> = context.dataStore.data.map { it[Keys.CF_WORKER_DOMAIN] ?: DEFAULT_WORKER_DOMAIN }
-        val cfWorkerToken: Flow<String> = context.dataStore.data.map { it[Keys.CF_WORKER_TOKEN] ?: DEFAULT_WORKER_TOKEN }
+        val TCP_FALLBACK_ENABLED = booleanPreferencesKey("tcp_fallback_enabled")
+        val CF_WORKER_ENABLED = booleanPreferencesKey("cf_worker_enabled")
+        val CF_WORKER_DOMAIN = stringPreferencesKey("cf_worker_domain")
+        val CF_WORKER_TOKEN = stringPreferencesKey("cf_worker_token")
         val CUSTOM_CF_DOMAIN_ENABLED = booleanPreferencesKey("custom_cf_domain_enabled")
         val CUSTOM_CF_DOMAIN = stringPreferencesKey("custom_cf_domain")
         val AUTO_START_ON_BOOT = booleanPreferencesKey("auto_start_on_boot")
@@ -87,6 +89,10 @@ class SettingsStore(private val context: Context) {
     val bindIp: Flow<String> = context.dataStore.data.map { it[Keys.BIND_IP] ?: "127.0.0.1" }
     val poolSize: Flow<Int> = context.dataStore.data.map { it[Keys.POOL_SIZE] ?: 4 }
     val cfproxyEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.CFPROXY_ENABLED] ?: true }
+    val tcpFallbackEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.TCP_FALLBACK_ENABLED] ?: false }
+    val cfWorkerEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.CF_WORKER_ENABLED] ?: false }
+    val cfWorkerDomain: Flow<String> = context.dataStore.data.map { it[Keys.CF_WORKER_DOMAIN] ?: DEFAULT_WORKER_DOMAIN }
+    val cfWorkerToken: Flow<String> = context.dataStore.data.map { it[Keys.CF_WORKER_TOKEN] ?: DEFAULT_WORKER_TOKEN }
     val customCfDomainEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.CUSTOM_CF_DOMAIN_ENABLED] ?: false }
     val customCfDomain: Flow<String> = context.dataStore.data.map { it[Keys.CUSTOM_CF_DOMAIN] ?: "" }
     val autoStartOnBoot: Flow<Boolean> = context.dataStore.data.map { it[Keys.AUTO_START_ON_BOOT] ?: false }
@@ -143,89 +149,96 @@ class SettingsStore(private val context: Context) {
         }
     }
 
-    suspend fun saveUpdateCheckIntervalHours(hours: Int) {
-        context.dataStore.edit { it[Keys.UPDATE_CHECK_INTERVAL_HOURS] = hours }
-    }
-
     suspend fun saveAutoStartOnBoot(enabled: Boolean) {
-        context.dataStore.edit { it[Keys.AUTO_START_ON_BOOT] = enabled }
-    }
-
-    suspend fun saveUpdatePostpone(version: String, until: Long) {
-        context.dataStore.edit {
-            it[Keys.UPDATE_POSTPONE_VERSION] = version
-            it[Keys.UPDATE_POSTPONE_UNTIL] = until
-        }
-    }
-
-    suspend fun saveUpdateDialogShown(version: String, shownAt: Long) {
-        context.dataStore.edit {
-            it[Keys.UPDATE_DIALOG_LAST_SHOWN_VERSION] = version
-            it[Keys.UPDATE_DIALOG_LAST_SHOWN_AT] = shownAt
-        }
-    }
-
-    suspend fun saveUpdateDialogAction(version: String, action: String, actedAt: Long) {
-        context.dataStore.edit {
-            it[Keys.UPDATE_DIALOG_LAST_ACTION_VERSION] = version
-            it[Keys.UPDATE_DIALOG_LAST_ACTION] = action
-            it[Keys.UPDATE_DIALOG_LAST_ACTION_AT] = actedAt
-        }
-    }
-
-    suspend fun migrateLegacyDefaults() {
-        context.dataStore.edit {
-            if (it[Keys.DIRECT_DC_DEFAULTS_V2_MIGRATED] == true) return@edit
-
-            val dc2 = it[Keys.DC2].orEmpty().trim()
-            if (dc2.isBlank() || dc2 == LEGACY_DIRECT_DC_IP) {
-                it[Keys.DC2] = DEFAULT_DIRECT_DC2_IP
-            }
-
-            val dc4 = it[Keys.DC4].orEmpty().trim()
-            if (dc4.isBlank() || dc4 == LEGACY_DIRECT_DC_IP) {
-                it[Keys.DC4] = DEFAULT_DIRECT_DC4_IP
-            }
-
-            it[Keys.DIRECT_DC_DEFAULTS_MIGRATED] = true
-            it[Keys.DIRECT_DC_DEFAULTS_V2_MIGRATED] = true
-        }
-    }
-
-    suspend fun saveAll(isDcAuto: Boolean, dc1: String, dc2: String, dc3: String, dc4: String, dc5: String, dc203: String,
-                        dc1m: String, dc2m: String, dc3m: String, dc4m: String, dc5m: String, dc203m: String,
-                        isExperimental: Boolean, bindIp: String, port: String, poolSize: Int,
-                        cfproxyEnabled: Boolean, customCfDomainEnabled: Boolean, customCfDomain: String, secretKey: String) {
-                        tcpFallbackEnabled: Boolean,
-                        cfWorkerEnabled: Boolean,
-                        cfWorkerDomain: String,
-                        cfWorkerToken: String
-        context.dataStore.edit {
-            it[Keys.IS_DC_AUTO] = isDcAuto
-            it[Keys.DC1] = dc1
-            it[Keys.DC2] = dc2
-            it[Keys.DC3] = dc3
-            it[Keys.DC4] = dc4
-            it[stringPreferencesKey("dc5")] = dc5
-            it[stringPreferencesKey("dc203")] = dc203
-            it[stringPreferencesKey("dc1m")] = dc1m
-            it[stringPreferencesKey("dc2m")] = dc2m
-            it[stringPreferencesKey("dc3m")] = dc3m
-            it[stringPreferencesKey("dc4m")] = dc4m
-            it[stringPreferencesKey("dc5m")] = dc5m
-            it[stringPreferencesKey("dc203m")] = dc203m
-            it[Keys.IS_EXPERIMENTAL_MODE] = isExperimental
-            it[Keys.BIND_IP] = bindIp
-            it[Keys.PORT] = port
-            it[Keys.POOL_SIZE] = poolSize
-            it[Keys.CFPROXY_ENABLED] = cfproxyEnabled
-            it[Keys.CUSTOM_CF_DOMAIN_ENABLED] = customCfDomainEnabled
-            it[Keys.CUSTOM_CF_DOMAIN] = customCfDomain
-            it[Keys.SECRET_KEY] = secretKey
-            it[Keys.TCP_FALLBACK_ENABLED] = tcpFallbackEnabled
-            it[Keys.CF_WORKER_ENABLED] = cfWorkerEnabled
-            it[Keys.CF_WORKER_DOMAIN] = cfWorkerDomain
-            it[Keys.CF_WORKER_TOKEN] = cfWorkerToken
-            }
-    }
+context.dataStore.edit { it[Keys.AUTO_START_ON_BOOT] = enabled }
+}
+suspend fun saveUpdatePostpone(version: String, until: Long) {
+context.dataStore.edit {
+it[Keys.UPDATE_POSTPONE_VERSION] = version
+it[Keys.UPDATE_POSTPONE_UNTIL] = until
+}
+}
+suspend fun saveUpdateDialogShown(version: String, shownAt: Long) {
+context.dataStore.edit {
+it[Keys.UPDATE_DIALOG_LAST_SHOWN_VERSION] = version
+it[Keys.UPDATE_DIALOG_LAST_SHOWN_AT] = shownAt
+}
+}
+suspend fun saveUpdateDialogAction(version: String, action: String, actedAt: Long) {
+context.dataStore.edit {
+it[Keys.UPDATE_DIALOG_LAST_ACTION_VERSION] = version
+it[Keys.UPDATE_DIALOG_LAST_ACTION] = action
+it[Keys.UPDATE_DIALOG_LAST_ACTION_AT] = actedAt
+}
+}
+suspend fun migrateLegacyDefaults() {
+context.dataStore.edit {
+if (it[Keys.DIRECT_DC_DEFAULTS_V2_MIGRATED] == true) return@edit
+val dc2 = it[Keys.DC2].orEmpty().trim()
+if (dc2.isBlank() || dc2 == LEGACY_DIRECT_DC_IP) {
+it[Keys.DC2] = DEFAULT_DIRECT_DC2_IP
+}
+val dc4 = it[Keys.DC4].orEmpty().trim()
+if (dc4.isBlank() || dc4 == LEGACY_DIRECT_DC_IP) {
+it[Keys.DC4] = DEFAULT_DIRECT_DC4_IP
+}
+it[Keys.DIRECT_DC_DEFAULTS_MIGRATED] = true
+it[Keys.DIRECT_DC_DEFAULTS_V2_MIGRATED] = true
+}
+}
+suspend fun saveAll(
+isDcAuto: Boolean,
+dc1: String,
+dc2: String,
+dc3: String,
+dc4: String,
+dc5: String,
+dc203: String,
+dc1m: String,
+dc2m: String,
+dc3m: String,
+dc4m: String,
+dc5m: String,
+dc203m: String,
+isExperimental: Boolean,
+bindIp: String,
+port: String,
+poolSize: Int,
+cfproxyEnabled: Boolean,
+customCfDomainEnabled: Boolean,
+customCfDomain: String,
+secretKey: String,
+tcpFallbackEnabled: Boolean = false,
+cfWorkerEnabled: Boolean = false,
+cfWorkerDomain: String = DEFAULT_WORKER_DOMAIN,
+cfWorkerToken: String = DEFAULT_WORKER_TOKEN
+) {
+context.dataStore.edit {
+it[Keys.IS_DC_AUTO] = isDcAuto
+it[Keys.DC1] = dc1
+it[Keys.DC2] = dc2
+it[Keys.DC3] = dc3
+it[Keys.DC4] = dc4
+it[stringPreferencesKey("dc5")] = dc5
+it[stringPreferencesKey("dc203")] = dc203
+it[stringPreferencesKey("dc1m")] = dc1m
+it[stringPreferencesKey("dc2m")] = dc2m
+it[stringPreferencesKey("dc3m")] = dc3m
+it[stringPreferencesKey("dc4m")] = dc4m
+it[stringPreferencesKey("dc5m")] = dc5m
+it[stringPreferencesKey("dc203m")] = dc203m
+it[Keys.IS_EXPERIMENTAL_MODE] = isExperimental
+it[Keys.BIND_IP] = bindIp
+it[Keys.PORT] = port
+it[Keys.POOL_SIZE] = poolSize
+it[Keys.CFPROXY_ENABLED] = cfproxyEnabled
+it[Keys.CUSTOM_CF_DOMAIN_ENABLED] = customCfDomainEnabled
+it[Keys.CUSTOM_CF_DOMAIN] = customCfDomain
+it[Keys.SECRET_KEY] = secretKey
+it[Keys.TCP_FALLBACK_ENABLED] = tcpFallbackEnabled
+it[Keys.CF_WORKER_ENABLED] = cfWorkerEnabled
+it[Keys.CF_WORKER_DOMAIN] = cfWorkerDomain
+it[Keys.CF_WORKER_TOKEN] = cfWorkerToken
+}
+}
 }
