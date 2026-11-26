@@ -642,16 +642,21 @@ impl CfWorkerPool {
     }
 
     async fn connect_one(
+        async fn connect_one(
         &self,
         worker_domains: Vec<String>,
         fallback_dst: String,
         dc: i32,
     ) -> Option<(RawWebSocket, String)> {
         let secure = !DISABLE_SECURE.load(Ordering::Relaxed);
-        let query = format!("dst={}&dc={}", fallback_dst, dc);
+        let token = CF_WORKER_TOKEN.read().clone();
+        let query = format!("dst={}&dc={}&media=0&token={}", fallback_dst, dc, token);
         let path = format!("/apiws?{}", query);
         for worker_domain in self.available_domains(worker_domains).await {
-            match ws_connect_full_opts(&worker_domain, &worker_domain, &path, 8.0, None, Some(secure))
+            let dial_host = resolve_doh(&worker_domain)
+                .await
+                .unwrap_or_else(|| worker_domain.clone());
+            match ws_connect_full_opts(&dial_host, &worker_domain, &path, 8.0, None, Some(secure))
                 .await
             {
                 Ok(ws) => return Some((ws, worker_domain)),
@@ -661,7 +666,7 @@ impl CfWorkerPool {
             }
         }
         None
-    }
+    }    
 
     pub async fn available_domains(&self, worker_domains: Vec<String>) -> Vec<String> {
         let now = now_unix_f64();
@@ -1401,6 +1406,9 @@ where
                     "[{}] DC{}{} -> trying CF worker {} for {}",
                     label, dc, m_tag, worker_domain, fallback_dst
                 );
+                let dial_host = resolve_doh(&worker_domain)
+                    .await
+                    .unwrap_or_else(|| worker_domain.clone());
                 match ws_connect_full_opts(
                     &worker_domain,
                     &worker_domain,
