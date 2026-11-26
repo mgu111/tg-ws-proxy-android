@@ -419,7 +419,57 @@ fun SettingsTab(settingsStore: SettingsStore) {
                     enabled = !isRunning
                 )
             }
+            
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
 
+Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically
+) {
+    Text(
+        "Свой Cloudflare Worker",
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+        fontWeight = FontWeight.SemiBold
+    )
+    Switch(
+        checked = cfWorkerEnabled,
+        onCheckedChange = {
+            cfWorkerEnabled = it
+            scheduleSave()
+        },
+        enabled = !isRunning
+    )
+}
+
+if (cfWorkerEnabled) {
+    OutlinedTextField(
+        value = cfWorkerDomainText,
+        onValueChange = {
+            cfWorkerDomainText = it.trim()
+            scheduleSave()
+        },
+        label = { Text("Домен Worker (например, my.workers.dev)") },
+        singleLine = true,
+        enabled = !isRunning,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp)
+    )
+    OutlinedTextField(
+        value = cfWorkerTokenText,
+        onValueChange = {
+            cfWorkerTokenText = it.trim()
+            scheduleSave()
+        },
+        label = { Text("Секретный токен (SECRET_TOKEN)") },
+        singleLine = true,
+        enabled = !isRunning,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp)
+    )
+}
+            
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
 
             Row(
