@@ -68,6 +68,8 @@ object ProxyController {
                     if (customCfDomainEnabled && cfEnabled) customCfDomain else ""
                 )
                 putExtra(ProxyService.EXTRA_SECRET_KEY, secretKey)
+                putExtra(ProxyService.EXTRA_CF_WORKER_DOMAIN, cfWorkerDomain)
+                putExtra(ProxyService.EXTRA_CF_WORKER_TOKEN, cfWorkerToken)
             }
         )
         ProxyTileService.requestSync(context)
