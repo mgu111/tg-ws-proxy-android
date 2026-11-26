@@ -41,6 +41,8 @@ class ProxyService : Service() {
     private var lastCfEnabled: Boolean = true
     private var lastCfPriority: Boolean = true
     private var lastCfDomain: String = ""
+    private var lastCfWorkerDomain: String = ""
+    private var lastCfWorkerToken: String = ""
     private var lastSecretKey: String = ""
 
     companion object {
@@ -94,7 +96,9 @@ class ProxyService : Service() {
                 val cfPriority = intent.getBooleanExtra(EXTRA_CFPROXY_PRIORITY, true)
                 val cfDomain = intent.getStringExtra(EXTRA_CFPROXY_DOMAIN) ?: ""
                 val secretKey = intent.getStringExtra(EXTRA_SECRET_KEY) ?: ""
-                startProxy(bindIp, port, ips, poolSize, cfEnabled, cfPriority, cfDomain, secretKey)
+                val cfWorkerDomain = intent.getStringExtra(EXTRA_CF_WORKER_DOMAIN) ?: ""
+                val cfWorkerToken = intent.getStringExtra(EXTRA_CF_WORKER_TOKEN) ?: ""
+                startProxy(bindIp, port, ips, poolSize, cfEnabled, cfPriority, cfDomain, secretKey, cfWorkerDomain, cfWorkerToken)
             }
             ACTION_STOP -> {
                 stopProxy()
@@ -107,7 +111,7 @@ class ProxyService : Service() {
                 // If we had saved params, try to restart
                 if (lastPort > 0 && lastSecretKey.isNotEmpty()) {
                     Log.w(TAG, "Service restarted by system, re-starting proxy")
-                    startProxy(lastBindIp, lastPort, lastIps, lastPoolSize, lastCfEnabled, lastCfPriority, lastCfDomain, lastSecretKey)
+                    startProxy(lastBindIp, lastPort, lastIps, lastPoolSize, lastCfEnabled, lastCfPriority, lastCfDomain, lastSecretKey, lastCfWorkerDomain, lastCfWorkerToken)
                 } else {
                     stopSelf()
                 }
@@ -134,7 +138,7 @@ class ProxyService : Service() {
 
     private fun startProxy(bindIp: String, port: Int, ips: String, poolSize: Int = 4,
                            cfEnabled: Boolean = true, cfPriority: Boolean = true,
-                           cfDomain: String = "", secretKey: String = "") {
+                           cfDomain: String = "", secretKey: String = "", cfWorkerDomain: String = "", cfWorkerToken: String = "") {
         if (_isRunning.value || stopInProgress) return
         _isVerifiedRunning.value = false
 
@@ -147,6 +151,8 @@ class ProxyService : Service() {
         lastCfPriority = cfPriority
         lastCfDomain = cfDomain
         lastSecretKey = secretKey
+        lastCfWorkerDomain = cfWorkerDomain
+        lastCfWorkerToken = cfWorkerToken
         notificationStartedAtMs = System.currentTimeMillis()
         lastNotificationContent = getString(R.string.notification_starting)
         lastNotificationAtMs = notificationStartedAtMs
@@ -182,6 +188,8 @@ class ProxyService : Service() {
                 NativeProxy.setPoolSize(poolSize)
                 NativeProxy.setCfProxyCacheDir(cacheDir.absolutePath)
                 NativeProxy.setCfProxyConfig(cfEnabled, cfPriority, cfDomain)
+                NativeProxy.setCfWorkerDomains(cfWorkerDomain)
+                NativeProxy.setCfWorkerToken(cfWorkerToken)
                 val result = NativeProxy.startProxy(bindIp, port, ips, secretKey, 1)
                 if (result == 0) {
                     serviceScope.launch {
@@ -290,7 +298,9 @@ class ProxyService : Service() {
                 cfEnabled = lastCfEnabled,
                 cfPriority = lastCfPriority,
                 cfDomain = lastCfDomain,
-                secretKey = lastSecretKey
+                secretKey = lastSecretKey,
+                cfWorkerDomain = lastCfWorkerDomain,
+                cfWorkerToken = lastCfWorkerToken
             )
         }
     }
