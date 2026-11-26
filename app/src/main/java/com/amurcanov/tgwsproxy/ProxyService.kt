@@ -54,6 +54,8 @@ class ProxyService : Service() {
         const val EXTRA_CFPROXY_ENABLED = "EXTRA_CFPROXY_ENABLED"
         const val EXTRA_CFPROXY_PRIORITY = "EXTRA_CFPROXY_PRIORITY"
         const val EXTRA_CFPROXY_DOMAIN = "EXTRA_CFPROXY_DOMAIN"
+        const val EXTRA_CF_WORKER_DOMAIN = "EXTRA_CF_WORKER_DOMAIN"
+        const val EXTRA_CF_WORKER_TOKEN = "EXTRA_CF_WORKER_TOKEN"
         const val EXTRA_SECRET_KEY = "EXTRA_SECRET_KEY"
         
         private const val NOTIFICATION_ID = 101
