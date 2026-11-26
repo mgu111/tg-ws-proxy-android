@@ -60,9 +60,9 @@ object NativeProxy {
     }
 
     fun setCfWorkerToken(token: String) {
-    ProxyLibrary.INSTANCE.SetCfWorkerToken(token)
+        ProxyLibrary.INSTANCE.SetCfWorkerToken(token)
     }
-    
+
     fun setFakeTlsDomain(domain: String) {
         ProxyLibrary.INSTANCE.SetFakeTlsDomain(domain)
     }
@@ -84,7 +84,6 @@ object NativeProxy {
         return try {
             val ptr = ProxyLibrary.INSTANCE.GetSecretWithPrefix() ?: return null
             val res = ptr.getString(0)
-            // Не вызываем FreeString(ptr) если строка пустая, чтобы избежать double-free/SIGSEGV на ARM64
             if (res.isNotEmpty()) {
                 ProxyLibrary.INSTANCE.FreeString(ptr)
             }
@@ -106,3 +105,4 @@ object NativeProxy {
             null
         }
     }
+}
