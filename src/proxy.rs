@@ -1443,7 +1443,7 @@ where
                     label,
                     dc,
                     is_media,
-                    None, // оригинал: splitter=None для worker
+                    splitter, // оригинал: splitter=None для worker
                     clt_dec.clone_state(),
                     clt_enc.clone_state(),
                     tg_enc.clone_state(),
