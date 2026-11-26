@@ -31,6 +31,9 @@ object ProxyController {
         val cfEnabled = settingsStore.cfproxyEnabled.first()
         val customCfDomainEnabled = settingsStore.customCfDomainEnabled.first()
         val customCfDomain = settingsStore.customCfDomain.first().trim()
+        val cfWorkerEnabled = settingsStore.cfWorkerEnabled.first()
+        val cfWorkerDomain = settingsStore.cfWorkerDomain.first().trim()
+        val cfWorkerToken = settingsStore.cfWorkerToken.first().trim()
         val secretKey = ensureSecretKey(settingsStore)
 
         val parsedIps = buildList {
@@ -67,9 +70,15 @@ object ProxyController {
                     ProxyService.EXTRA_CFPROXY_DOMAIN,
                     if (customCfDomainEnabled && cfEnabled) customCfDomain else ""
                 )
+                putExtra(
+                    ProxyService.EXTRA_CF_WORKER_DOMAIN,
+                    if (cfWorkerEnabled) cfWorkerDomain else ""
+                )
+                putExtra(
+                    ProxyService.EXTRA_CF_WORKER_TOKEN,
+                    if (cfWorkerEnabled) cfWorkerToken else ""
+                )
                 putExtra(ProxyService.EXTRA_SECRET_KEY, secretKey)
-                putExtra(ProxyService.EXTRA_CF_WORKER_DOMAIN, cfWorkerDomain)
-                putExtra(ProxyService.EXTRA_CF_WORKER_TOKEN, cfWorkerToken)
             }
         )
         ProxyTileService.requestSync(context)
