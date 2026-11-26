@@ -642,7 +642,6 @@ impl CfWorkerPool {
     }
 
     async fn connect_one(
-        async fn connect_one(
         &self,
         worker_domains: Vec<String>,
         fallback_dst: String,
@@ -666,7 +665,7 @@ impl CfWorkerPool {
             }
         }
         None
-    }    
+    }        
 
     pub async fn available_domains(&self, worker_domains: Vec<String>) -> Vec<String> {
         let now = now_unix_f64();
