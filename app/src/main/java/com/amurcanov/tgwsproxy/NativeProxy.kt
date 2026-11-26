@@ -81,16 +81,28 @@ object NativeProxy {
 
     /** Returns the full secret with correct prefix (dd or ee+domain_hex) */
     fun getSecretWithPrefix(): String? {
-        val ptr = ProxyLibrary.INSTANCE.GetSecretWithPrefix() ?: return null
-        val res = ptr.getString(0)
-        ProxyLibrary.INSTANCE.FreeString(ptr)
-        return res
+        return try {
+            val ptr = ProxyLibrary.INSTANCE.GetSecretWithPrefix() ?: return null
+            val res = ptr.getString(0)
+            // Не вызываем FreeString(ptr) если строка пустая, чтобы избежать double-free/SIGSEGV на ARM64
+            if (res.isNotEmpty()) {
+                ProxyLibrary.INSTANCE.FreeString(ptr)
+            }
+            res.ifEmpty { null }
+        } catch (_: Throwable) {
+            null
+        }
     }
 
     fun getStats(): String? {
-        val ptr = ProxyLibrary.INSTANCE.GetStats() ?: return null
-        val res = ptr.getString(0)
-        ProxyLibrary.INSTANCE.FreeString(ptr)
-        return res
+        return try {
+            val ptr = ProxyLibrary.INSTANCE.GetStats() ?: return null
+            val res = ptr.getString(0)
+            if (res.isNotEmpty()) {
+                ProxyLibrary.INSTANCE.FreeString(ptr)
+            }
+            res.ifEmpty { null }
+        } catch (_: Throwable) {
+            null
+        }
     }
-}
