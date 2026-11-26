@@ -1806,11 +1806,14 @@ async fn serve_core<R, W>(
     // порт ветки из _handle_client оригинала.
     let mut pooled_ws: Option<RawWebSocket> = None;
     let mut use_pooled_direct = false;
-    if !dc_configured || blacklisted || (ip_cooldown_active && is_any_cf_fallback) {
+    let has_custom_worker = !CF_WORKER_DOMAINS.read().is_empty();
+    if !dc_configured || blacklisted || has_custom_worker || (ip_cooldown_active && is_any_cf_fallback) {
         if !dc_configured {
             linfo!("[{}] DC{} not in config -> fallback", label, dc);
         } else if blacklisted {
             linfo!("[{}] DC{}{} WS blacklisted -> fallback", label, dc, m_tag);
+        } else if has_custom_worker {
+            linfo!("[{}] DC{}{} -> routing directly via CF Worker", label, dc, m_tag);
         } else {
             // Шанс пулу при случайном таймауте: пробуем забрать готовый WS.
             if !is_test_dc {
