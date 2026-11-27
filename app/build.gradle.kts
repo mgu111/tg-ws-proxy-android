@@ -83,12 +83,8 @@ android {
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            isMinifyEnabled = false
+            isShrinkResources = false
             val keyFile = localProperties.getProperty("KEYSTORE_FILE")
             val resolvedFile = if (keyFile != null && keyFile.startsWith("..")) {
                 file(rootDir.resolve(keyFile.substring(3)))
@@ -100,11 +96,12 @@ android {
                 signingConfig = signingConfigs.getByName("release")
                 println("✅ Signing config applied: ${resolvedFile.absolutePath}")
             } else {
+                signingConfig = signingConfigs.getByName("debug")
                 println("⚠️ WARNING: Keystore not found, using debug signing")
-                println("   Looked for: ${resolvedFile?.absolutePath ?: keyFile}")
             }
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
